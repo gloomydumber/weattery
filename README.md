@@ -1,66 +1,11 @@
-## Foundry
+# Weattery: A Web3 Lottery Game for Weather Prediction
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+## Abstract
 
-Foundry consists of:
+In today's world, climate change has made weather patterns increasingly unpredictable, even challenging the accuracy of forecasts provided by official meteorological institutions. To add an element of excitement to this uncertainty, Weattery introduces a Web3-based lottery game where players can predict and bet on the weather.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+This innovative protocol allows participants to place bets on various weather outcomes, such as temperature, precipitation, or storm occurrence. By leveraging blockchain technology, Weattery ensures transparency and fairness in every bet, making the game both entertaining and trustworthy.
 
-## Documentation
+The decentralized nature of Weattery empowers users from around the globe to participate, creating a diverse and dynamic community. As climate change continues to influence weather unpredictability, Weattery offers a unique opportunity to engage with this reality in a fun and potentially rewarding way.
 
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+Beyond entertainment, Weattery also aims to raise awareness about the challenges of climate change and the importance of accurate weather forecasting. By gamifying weather prediction, the platform encourages users to think critically about climate patterns and their effects on daily life.
