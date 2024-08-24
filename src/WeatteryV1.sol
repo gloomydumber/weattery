@@ -88,6 +88,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
         // EFFECT
         WeatteryBettingToken(WBT).burn(msg.sender, _amount);
 
+        // INTERACTIONS
         (bool success,) = msg.sender.call{value: refundAmount}("");
         require(success, "Refund transfer failed");
 
