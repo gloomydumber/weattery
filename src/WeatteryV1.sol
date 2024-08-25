@@ -298,6 +298,15 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     }
 
     /**
+     * @dev Returns the number of participants in the current round.
+     *
+     * @return participant.length
+     */
+    function getParticipantLength() public view returns (uint256) {
+        return participant.length;
+    }
+
+    /**
      * @dev Allows users to claim their Weattery Governance Tokens (WGT) through an airdrop.
      * The claimable amount is pre-calculated from off-chain.
      * This function just represents a future availability of airdrop.
