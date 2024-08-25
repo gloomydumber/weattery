@@ -27,7 +27,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
 
     mapping(address => mapping(WeatherState => uint256)) individualVote;
     mapping(WeatherState => uint256) public weatherVote;
-    mapping(address => uint256) claimableToken;
+    mapping(address => uint256) public claimableToken;
     mapping(address => bool) public isAirdropClaimed;
 
     event gameStarted(uint256 startedTimestamp);
