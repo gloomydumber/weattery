@@ -13,20 +13,20 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable, IWeatteryV1 {
     address public WBT; // Weattery Betting Token
     address public WGT; // Weattery Governance Token, would be used on Governance (consensus for setting Fee, phase time, etc...)
-    uint256 startedTimestamp;
+    uint256 public startedTimestamp;
     uint256 public saleDuration;
     uint256 public drawDuration;
     uint256 public claimDuration;
     uint256 public protocolFee;
     bytes32 public merkleRoot;
-    bool isDrawed;
+    bool public isDrawed;
     address[] public participant;
 
     LotteryPhase public lotteryPhase;
     WeatherState public weatherState;
 
     mapping(address => mapping(WeatherState => uint256)) individualVote;
-    mapping(WeatherState => uint256) weatherVote;
+    mapping(WeatherState => uint256) public weatherVote;
     mapping(address => uint256) claimableToken;
     mapping(address => bool) public isAirdropClaimed;
 
