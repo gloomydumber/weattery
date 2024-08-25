@@ -18,6 +18,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     uint256 public drawDuration;
     uint256 public claimDuration;
     uint256 public protocolFee;
+    uint256 public winWeight;
     bytes32 public merkleRoot;
     bool public isDrawed;
     address[] public participant;
@@ -57,6 +58,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
         drawDuration = 3 minutes;
         claimDuration = 2 minutes;
         protocolFee = 5;
+        winWeight = 150;
     }
 
     /**
@@ -203,7 +205,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
                 uint256 bettedAmount = individualVote[participant[i]][weatherState];
 
                 individualVote[participant[i]][weatherState] = 0;
-                claimableToken[participant[i]] = bettedAmount * 150 / 100;
+                claimableToken[participant[i]] = bettedAmount * winWeight / 100;
             }
         }
 
