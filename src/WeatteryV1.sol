@@ -179,7 +179,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
 
         if (currentTime >= saleEnd && currentTime < drawEnd) {
             lotteryPhase = LotteryPhase.drawingPhase;
-        } else if (currentTime >= drawEnd) {
+        } else if (currentTime >= drawEnd && currentTime < claimEnd) {
             lotteryPhase = LotteryPhase.claimPhase;
         } else if (currentTime >= claimEnd) {
             lotteryPhase = LotteryPhase.stalePhase;
