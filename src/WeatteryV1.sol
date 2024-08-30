@@ -261,7 +261,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
 
     /**
      * @dev Multicall function that executes multiple fetchWeatherVotes calls using delegatecall.
-     * This function ensures only fetchWeatherVotes calls are allowed.
+     * This function ensures only {fetchWeatherVotes} calls are allowed.
      *
      * @param data Array of encoded function calls to fetchWeatherVotes.
      * @return results Array of the results of each function call.
