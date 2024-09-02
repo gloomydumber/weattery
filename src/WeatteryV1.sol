@@ -401,6 +401,15 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     }
 
     /**
+     * @dev Sets the Merkle Root value to be used for a future airdrop.
+     *
+     * @param _merkleRoot The Merkle Root that will be used to verify airdrop eligibility.
+     */
+    function setMerkleRoot(bytes32 _merkleRoot) extenral onlyOwner {
+        merkleRoot = _merkleRoot;
+    }
+
+    /**
      * @dev Allows users to claim their Weattery Governance Tokens (WGT) through an airdrop.
      * The claimable amount is pre-calculated from off-chain.
      * This function just represents a future availability of airdrop.
