@@ -272,7 +272,53 @@ contract WeatteryTest is Test {
     }
 
     function testEmergencyStop() public {
-        // TODO: implement
+        weattery.startLottery();
+
+        vm.prank(address(1));
+        weattery.charge{value: 0.1 ether}();
+        vm.prank(address(2));
+        weattery.charge{value: 0.2 ether}();
+        vm.prank(address(3));
+        weattery.charge{value: 0.3 ether}();
+        vm.prank(address(4));
+        weattery.charge{value: 0.4 ether}();
+
+        vm.prank(address(1));
+        weattery.bet(0.1 ether, IWeatteryV1.WeatherState.Sunny);
+        vm.prank(address(2));
+        weattery.bet(0.2 ether, IWeatteryV1.WeatherState.Cloudy);
+        vm.prank(address(3));
+        weattery.bet(0.3 ether, IWeatteryV1.WeatherState.Rainy);
+        vm.prank(address(4));
+        weattery.bet(0.4 ether, IWeatteryV1.WeatherState.Snowy);
+
+        vm.expectRevert(
+            "Setting Emergency refund Balance can only be initiated after the protocol has been stopped via emergencyStop"
+        );
+        weattery.setEmergencyRefundBalance();
+
+        weattery.emergencyStop();
+
+        vm.expectRevert(
+            "Emergency refund can only be initiated after setting the Emergency Refund Balance via setEmergencyRefundBalance"
+        );
+        weattery.emergencyRefund();
+
+        weattery.setEmergencyRefundBalance();
+
+        vm.expectRevert(
+            "The protocol can only be resumed after the Emergency Refund Balance has been distributed via emergencyRefund"
+        );
+        weattery.resumeProtocol();
+
+        weattery.emergencyRefund();
+
+        assertEq(wbt.balanceOf(address(1)), 0.1 ether);
+        assertEq(wbt.balanceOf(address(2)), 0.2 ether);
+        assertEq(wbt.balanceOf(address(3)), 0.3 ether);
+        assertEq(wbt.balanceOf(address(4)), 0.4 ether);
+
+        weattery.resumeProtocol();
     }
 
     receive() external payable {}

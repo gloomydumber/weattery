@@ -21,12 +21,14 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     uint256 public winWeight;
     bytes32 public merkleRoot;
     bool public isDrawed;
+    bool public isEmergencyRefundBalanceSet;
     address[] public participant;
 
     LotteryPhase public lotteryPhase;
     WeatherState public weatherState;
 
     mapping(address => mapping(WeatherState => uint256)) individualVote;
+    mapping(address => uint256) emergencyRefundBalance;
     mapping(WeatherState => uint256) public weatherVote;
     mapping(address => uint256) public claimableToken;
     mapping(address => bool) public isAirdropClaimed;
@@ -37,6 +39,8 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     event betted(address indexed better, WeatherState weatherState, uint256 amount);
     event drawed(address indexed drawer, uint256 drawedTimestamp);
     event claimed(address indexed claimer, uint256 amount, uint256 claimedTimestamp);
+    event emergencyStopped();
+    event emergencyResumed();
     event AirdropClaimed(address indexed claimant, uint256 amount);
 
     modifier OnlyAtomicBet() {
@@ -95,15 +99,6 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
         require(success, "Refund transfer failed");
 
         emit refunded(msg.sender, refundAmount);
-    }
-
-    /**
-     * @dev Initiates an emergency refund of all Ether held by the protocol.
-     * Implements a pull-over-push pattern for security.
-     *
-     */
-    function emergencyRefund() external onlyOwner {
-        // TODO: Implement as Pull over Push
     }
 
     /**
@@ -281,6 +276,103 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
             require(success, "delegatecall failed");
             results[i] = result;
         }
+    }
+
+    /**
+     * @dev Halts the protocol operations immediately in case of a critical situation.
+     * This function should only be invoked during emergency scenarios.
+     *
+     */
+    function emergencyStop() external onlyOwner {
+        require(!paused(), "The protocol is already stopped");
+        _pause();
+
+        emit emergencyStopped();
+    }
+
+    /**
+     * @dev Sets the Emergency Refund Balance for all participants.
+     * This function can only be called after the protocol has been paused using {emergencyStop}.
+     * It is a crucial step in the emergency process, ensuring that each participant's refund balance is calculated based on their previous votes.
+     *
+     * Before proceeding, the function checks that the protocol is paused and that there are participants to distribute the refund balance to.
+     * If these conditions are met, it iterates through each participant and their respective weather states to calculate and store their refund balances.
+     *
+     * Once this process is completed, the Emergency Refund Balance is considered set, and the protocol is prepared for the {emergencyRefund} function to distribute the refunds.
+     */
+    function setEmergencyRefundBalance() external onlyOwner {
+        require(
+            paused(),
+            "Setting Emergency refund Balance can only be initiated after the protocol has been stopped via emergencyStop"
+        );
+
+        isEmergencyRefundBalanceSet = true;
+
+        uint256 participantLength = getParticipantLength();
+        require(participantLength != 0, "There are no participants to distribute the refund balance to");
+        uint256 weatherStateLength = uint256(type(WeatherState).max) + 1;
+
+        for (uint256 i = 0; i < participantLength; ++i) {
+            address user = participant[i];
+            for (uint256 j = 0; j < weatherStateLength; ++j) {
+                WeatherState _weatherState = IWeatteryV1.WeatherState(j);
+                if (individualVote[user][_weatherState] != 0) {
+                    emergencyRefundBalance[user] = individualVote[user][_weatherState];
+                }
+            }
+        }
+    }
+
+    /**
+     * @dev Initiates an emergency refund of all Ether held by the protocol.
+     * This function can only be called after {emergencyStop} and {setEmergencyRefundBalance} has been invoked.
+     * If a user cannot receive their refund, the refund amount will be sent to the owner instead.
+     *
+     */
+    function emergencyRefund() external onlyOwner {
+        require(
+            paused(), "Emergency refund can only be initiated after the protocol has been stopped via emergencyStop"
+        );
+        require(
+            isEmergencyRefundBalanceSet,
+            "Emergency refund can only be initiated after setting the Emergency Refund Balance via setEmergencyRefundBalance"
+        );
+
+        uint256 participantLength = getParticipantLength();
+
+        for (uint256 i = 0; i < participantLength; ++i) {
+            address user = participant[i];
+            uint256 amount = emergencyRefundBalance[user];
+
+            emergencyRefundBalance[user] = 0;
+            WeatteryBettingToken(WBT).transfer(user, amount);
+        }
+
+        isEmergencyRefundBalanceSet = false;
+    }
+
+    /**
+     * @dev Resumes the protocol operations after they have been stopped.
+     * This function can only be called if the protocol is currently paused.
+     * Before resuming, the function checks that the Emergency Refund Balance has not been set.
+     * This is important because if the Emergency Refund Balance is set, it indicates that there are pending refunds that need to be distributed to participants.
+     * Allowing the protocol to resume while these refunds are still pending could result in participants losing their refunds.
+     * Therefore, the protocol can only be resumed after these refunds have been fully processed using the {emergencyRefund} function.
+     * After the protocol is resumed, the lottery phase will be set to the Stale Phase.
+     *
+     */
+    function resumeProtocol() external onlyOwner {
+        require(paused(), "The protocol is not stopped");
+        require(
+            !isEmergencyRefundBalanceSet,
+            "The protocol can only be resumed after the Emergency Refund Balance has been distributed via emergencyRefund"
+        );
+
+        lotteryPhase = LotteryPhase.stalePhase;
+
+        _unpause();
+
+        emit emergencyResumed();
     }
 
     /**

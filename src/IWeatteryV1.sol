@@ -18,11 +18,14 @@ interface IWeatteryV1 {
 
     function charge() external payable;
     function refund(uint256 _amount) external payable;
-    function emergencyRefund() external;
     function startLottery() external;
     function bet(uint256 _bet, WeatherState _weatherState) external;
     function draw() external;
     function claim() external;
+    function emergencyStop() external;
+    function resumeProtocol() external;
+    function setEmergencyRefundBalance() external;
+    function emergencyRefund() external;
     function retrieveAllProtocolFee() external;
     function SetGovernanceToken(address _WGT) external;
     function claimAirdrop(uint256 _amount, bytes32[] calldata _merkleProof) external;
