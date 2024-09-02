@@ -71,7 +71,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      *
      */
     function charge() external payable {
-        require(!paused(), "The protocol is currently stopped due to an issue.");
+        require(!paused(), "The protocol is currently stopped due to an issue");
 
         WeatteryBettingToken(WBT).mint(msg.sender, msg.value);
         emit charged(msg.sender, msg.value);
@@ -83,7 +83,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      * @param _amount The Amout value to refund $WBT (Weattery Betting Token) and get Ether.
      */
     function refund(uint256 _amount) external payable {
-        require(!paused(), "The protocol is currently stopped due to an issue.");
+        require(!paused(), "The protocol is currently stopped due to an issue");
 
         uint256 refundAmount = _amount * (100 - protocolFee) / 100;
 
@@ -106,7 +106,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      *
      */
     function startLottery() external onlyOwner {
-        require(!paused(), "The protocol is currently stopped due to an issue.");
+        require(!paused(), "The protocol is currently stopped due to an issue");
         require(fetchLotteryPhase() == LotteryPhase.stalePhase, "Game could be started only on Stale Phase");
 
         uint256 participantLength = getParticipantLength();
@@ -139,7 +139,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      * @param _weatherState The weatherState to bet.
      */
     function bet(uint256 _amount, WeatherState _weatherState) external onlyAtomicBet {
-        require(!paused(), "The protocol is currently stopped due to an issue.");
+        require(!paused(), "The protocol is currently stopped due to an issue");
         require(fetchLotteryPhase() == LotteryPhase.salePhase, "You can bet only on Sale Phase");
 
         // CHECK
@@ -237,7 +237,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      *
      */
     function fetchWeather() internal returns (WeatherState) {
-        require(!paused(), "The protocol is currently stopped due to an issue.");
+        require(!paused(), "The protocol is currently stopped due to an issue");
         require(lotteryPhase == LotteryPhase.drawingPhase);
         weatherState =
             WeatherState(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))) % 4);
@@ -252,7 +252,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      * @param _weatherState the sepcific state of weather to fetch.
      */
     function fetchWeatherVotes(WeatherState _weatherState) external view returns (uint256) {
-        require(!paused(), "The protocol is currently stopped due to an issue.");
+        require(!paused(), "The protocol is currently stopped due to an issue");
         return weatherVote[_weatherState];
     }
 
@@ -382,7 +382,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      */
     function retrieveAllProtocolFee() external onlyOwner {
         (bool success,) = owner().call{value: address(this).balance}("");
-        require(success, "Transfer Protocol Fee to owner failed.");
+        require(success, "Transfer Protocol Fee to owner failed");
     }
 
     /**
@@ -433,6 +433,6 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
         (bool success,) = newImplementation.call{value: address(this).balance}("");
-        require(success, "Transfer Protocol Fee to New Implementation failed.");
+        require(success, "Transfer Protocol Fee to New Implementation failed");
     }
 }
