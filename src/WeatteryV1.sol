@@ -20,8 +20,6 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     uint256 public protocolFee;
     uint256 public winWeight;
     bytes32 public merkleRoot;
-    bool public isDrawed;
-    bool public isEmergencyRefundBalanceSet;
     address[] public participant;
 
     LotteryPhase public lotteryPhase;
@@ -32,6 +30,11 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     mapping(WeatherState => uint256) public weatherVote;
     mapping(address => uint256) public claimableToken;
     mapping(address => bool) public isAirdropClaimed;
+
+    uint256 private flags;
+
+    uint256 constant FLAG_IS_DRAWED = 1 << 0;
+    uint256 constant FLAG_IS_EMERGENCY_REFUND_BALANCE_SET = 1 << 1;
 
     event gameStarted(uint256 startedTimestamp);
     event charged(address indexed charger, uint256 amount);
@@ -125,7 +128,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
 
         weatherVote[WeatherState.Sunny] =
             weatherVote[WeatherState.Cloudy] = weatherVote[WeatherState.Rainy] = weatherVote[WeatherState.Snowy] = 0;
-        isDrawed = false;
+        setDrawed(false);
         lotteryPhase = LotteryPhase.salePhase;
         startedTimestamp = block.timestamp;
 
@@ -193,7 +196,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      */
     function draw() external {
         require(fetchLotteryPhase() == LotteryPhase.drawingPhase, "You can draw only on Draw Phase");
-        require(!isDrawed, "Already Drawed");
+        require(!isDrawed(), "Already Drawed");
 
         fetchWeather();
 
@@ -206,7 +209,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
             }
         }
 
-        isDrawed = true;
+        setDrawed(true);
         emit drawed(msg.sender, block.timestamp);
     }
 
@@ -216,6 +219,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      */
     function claim() external {
         require(fetchLotteryPhase() == LotteryPhase.claimPhase, "You can claim only on Claim Phase");
+        require(isDrawed(), "You can only claim after the drawing has been completed");
 
         // CHECK
         require(claimableToken[msg.sender] != 0, "You don't have tokens to claimable");
@@ -239,8 +243,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     function fetchWeather() internal returns (WeatherState) {
         require(!paused(), "The protocol is currently stopped due to an issue");
         require(lotteryPhase == LotteryPhase.drawingPhase);
-        weatherState =
-            WeatherState(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))) % 4);
+        weatherState = WeatherState(uint256(keccak256(abi.encodePacked(block.timestamp, block.number, msg.sender))) % 4);
 
         return weatherState;
     }
@@ -308,7 +311,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
             "Setting Emergency refund Balance can only be initiated after the protocol has been stopped via emergencyStop"
         );
 
-        isEmergencyRefundBalanceSet = true;
+        setEmergencyRefundBalanceSet(true);
 
         uint256 participantLength = getParticipantLength();
         require(participantLength != 0, "There are no participants to distribute the refund balance to");
@@ -336,7 +339,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
             paused(), "Emergency refund can only be initiated after the protocol has been stopped via emergencyStop"
         );
         require(
-            isEmergencyRefundBalanceSet,
+            isEmergencyRefundBalanceSet(),
             "Emergency refund can only be initiated after setting the Emergency Refund Balance via setEmergencyRefundBalance"
         );
 
@@ -350,7 +353,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
             WeatteryBettingToken(WBT).transfer(user, amount);
         }
 
-        isEmergencyRefundBalanceSet = false;
+        setEmergencyRefundBalanceSet(false);
     }
 
     /**
@@ -366,7 +369,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     function resumeProtocol() external onlyOwner {
         require(paused(), "The protocol is not stopped");
         require(
-            !isEmergencyRefundBalanceSet,
+            !isEmergencyRefundBalanceSet(),
             "The protocol can only be resumed after the Emergency Refund Balance has been distributed via emergencyRefund"
         );
 
@@ -429,6 +432,71 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
         WeatteryGovernanceToken(WGT).transfer(msg.sender, _amount);
 
         emit AirdropClaimed(msg.sender, _amount);
+    }
+
+    /**
+     * @dev Sets a specific flag within the `flags` uint256 variable.
+     * @param _flag The flag to be set, defined by its bit position.
+     */
+    function _setFlag(uint256 _flag) internal {
+        flags |= _flag;
+    }
+
+    /**
+     * @dev Clears a specific flag within the `flags` uint256 variable.
+     * @param _flag The flag to be cleared, defined by its bit position.
+     */
+    function _clearFlag(uint256 _flag) internal {
+        flags &= ~_flag;
+    }
+
+    /**
+     * @dev Checks if a specific flag is set within the `flags` uint256 variable.
+     * @param _flag The flag to be checked, defined by its bit position.
+     * @return bool Returns `true` if the flag is set, otherwise `false`.
+     */
+    function _isFlagSet(uint256 _flag) internal view returns (bool) {
+        return (flags & _flag) != 0;
+    }
+
+    /**
+     * @dev Sets or clears the `isDrawed` flag.
+     * @param _isDrawed A boolean indicating whether the `isDrawed` flag should be set (`true`) or cleared (`false`).
+     */
+    function setDrawed(bool _isDrawed) internal {
+        if (_isDrawed) {
+            _setFlag(FLAG_IS_DRAWED);
+        } else {
+            _clearFlag(FLAG_IS_DRAWED);
+        }
+    }
+
+    /**
+     * @dev Sets or clears the `isEmergencyRefundBalanceSet` flag.
+     * @param _isSet A boolean indicating whether the `isEmergencyRefundBalanceSet` flag should be set (`true`) or cleared (`false`).
+     */
+    function setEmergencyRefundBalanceSet(bool _isSet) internal {
+        if (_isSet) {
+            _setFlag(FLAG_IS_EMERGENCY_REFUND_BALANCE_SET);
+        } else {
+            _clearFlag(FLAG_IS_EMERGENCY_REFUND_BALANCE_SET);
+        }
+    }
+
+    /**
+     * @dev Checks if the `isDrawed` flag is set.
+     * @return bool Returns `true` if the `isDrawed` flag is set, otherwise `false`.
+     */
+    function isDrawed() public view returns (bool) {
+        return _isFlagSet(FLAG_IS_DRAWED);
+    }
+
+    /**
+     * @dev Checks if the `isEmergencyRefundBalanceSet` flag is set.
+     * @return bool Returns `true` if the `isEmergencyRefundBalanceSet` flag is set, otherwise `false`.
+     */
+    function isEmergencyRefundBalanceSet() public view returns (bool) {
+        return _isFlagSet(FLAG_IS_EMERGENCY_REFUND_BALANCE_SET);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
