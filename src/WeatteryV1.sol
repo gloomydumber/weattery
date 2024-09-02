@@ -43,7 +43,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     event emergencyResumed();
     event AirdropClaimed(address indexed claimant, uint256 amount);
 
-    modifier OnlyAtomicBet() {
+    modifier onlyAtomicBet() {
         require(individualVote[msg.sender][WeatherState.Sunny] == 0, "You can bet only one time on each Sale Phase");
         require(individualVote[msg.sender][WeatherState.Cloudy] == 0, "You can bet only one time on each Sale Phase");
         require(individualVote[msg.sender][WeatherState.Rainy] == 0, "You can bet only one time on each Sale Phase");
@@ -133,12 +133,12 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     }
 
     /**
-     * @dev Charge $WBT (Weattery Betting Token) to do bet.
+     * @dev Places a bet using $WBT (Weattery Betting Token) to participate in the game.
      *
      * @param _amount The Amout value to bet with $WBT (Weattery Betting Token).
      * @param _weatherState The weatherState to bet.
      */
-    function bet(uint256 _amount, WeatherState _weatherState) external OnlyAtomicBet {
+    function bet(uint256 _amount, WeatherState _weatherState) external onlyAtomicBet {
         require(!paused(), "The protocol is currently stopped due to an issue.");
         require(fetchLotteryPhase() == LotteryPhase.salePhase, "You can bet only on Sale Phase");
 
@@ -388,7 +388,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
     /**
      * @dev Set Address of Weattery Governance Token.
      */
-    function SetGovernanceToken(address _WGT) external onlyOwner {
+    function setGovernanceToken(address _WGT) external onlyOwner {
         require(WGT == address(0), "token address is already set");
         WGT = _WGT;
     }
