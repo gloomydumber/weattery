@@ -42,7 +42,7 @@ contract WeatteryTest is Test {
 
         weattery.startLottery();
 
-        // afther start the lottery
+        // after start the lottery
         assertEq(uint8(weattery.lotteryPhase()), uint8(IWeatteryV1.LotteryPhase.salePhase));
         assertEq(weattery.weatherVote(IWeatteryV1.WeatherState.Sunny), 0);
         assertEq(weattery.weatherVote(IWeatteryV1.WeatherState.Cloudy), 0);
