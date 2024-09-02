@@ -109,8 +109,10 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
         require(!paused(), "The protocol is currently stopped due to an issue.");
         require(fetchLotteryPhase() == LotteryPhase.stalePhase, "Game could be started only on Stale Phase");
 
-        if (participant.length > 0) {
-            for (uint256 i = 0; i < participant.length; ++i) {
+        uint256 participantLength = getParticipantLength();
+
+        if (participantLength > 0) {
+            for (uint256 i = 0; i < participantLength; ++i) {
                 individualVote[participant[i]][WeatherState.Sunny] = individualVote[participant[i]][WeatherState.Cloudy]
                 = individualVote[participant[i]][WeatherState.Rainy] =
                     individualVote[participant[i]][WeatherState.Snowy] = 0;
