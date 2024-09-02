@@ -407,7 +407,7 @@ contract WeatteryV1 is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable,
      *
      * @param _merkleRoot The Merkle Root that will be used to verify airdrop eligibility.
      */
-    function setMerkleRoot(bytes32 _merkleRoot) extenral onlyOwner {
+    function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
         merkleRoot = _merkleRoot;
     }
 
